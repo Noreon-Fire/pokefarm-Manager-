@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#101923">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>PokéFarm Manager</title>
+
+<style>
+:root {
+  --bg:#0c1219;
+  --panel:#141e29;
+  --panel2:#1a2734;
+  --line:#2b3a49;
+  --text:#eaf2f8;
+  --muted:#9badbd;
+  --accent:#36b7ff;
+  --good:#55d6a2;
+  --bad:#ff7777;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.app{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
+.sidebar{background:#0a1119;border-right:1px solid var(--line);padding:18px;position:sticky;top:0;height:100vh;overflow:auto}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:24px}
+.logo{font-size:25px;background:var(--accent);color:#07131d;padding:10px;border-radius:12px}
+.brand h1{font-size:16px;margin:0 0 4px}
+.brand small{color:var(--muted)}
+.nav-title{font-size:10px;color:var(--muted);letter-spacing:1.5px;margin:20px 8px 8px}
+.nav{display:grid;gap:6px}
+.nav button{border:1px solid transparent;background:transparent;color:var(--muted);padding:12px;border-radius:10px;text-align:left}
+.nav button.active,.nav button:hover{background:#183044;border-color:#27506b;color:white}
+.sidebar-bottom{font-size:11px;color:var(--muted);line-height:1.5;margin-top:25px}
+.main{padding:25px;min-width:0;max-width:1500px;width:100%;margin:auto}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:25px}
+.topbar h2{font-size:27px;margin:5px 0}
+.eyebrow{font-size:10px;letter-spacing:2px;color:var(--accent)}
+.date-pill{border:1px solid var(--line);border-radius:30px;padding:10px;color:var(--muted);font-size:12px;text-transform:capitalize}
+.page{display:none}
+.page.active{display:block}
+.page-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:18px}
+.page-head h3{margin:0 0 5px;font-size:22px}
+.page-head p{margin:0;color:var(--muted);font-size:12px}
+.grid{display:grid;gap:14px}
+.stats-grid{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:15px}
+.two-col{grid-template-columns:repeat(2,minmax(0,1fr))}
+.three-col{grid-template-columns:repeat(3,minmax(0,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:17px;min-width:0}
+.card h4{margin:0 0 14px;font-size:14px}
+.metric-label{font-size:12px;color:var(--muted);margin-bottom:10px}
+.metric-value{font-size:25px;font-weight:bold;overflow-wrap:anywhere}
+.metric-foot{font-size:11px;color:var(--muted);margin-top:8px}
+.positive{color:var(--good)}
+.negative{color:var(--bad)}
+.muted{color:var(--muted)}
+.accent{color:var(--accent)}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field label{font-size:12px;color:var(--muted)}
+input,select,textarea{width:100%;background:#0c151e;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:10px}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+input[type=checkbox]{width:auto;accent-color:var(--accent)}
+textarea{min-height:70px;resize:vertical}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.full{grid-column:1/-1}
+.check{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.btn{border:1px solid var(--line);border-radius:9px;padding:10px 13px;background:#1c2a37;color:var(--text);font-size:12px;font-weight:bold}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#06131c}
+.btn.danger{background:#301a21;color:var(--bad)}
+.btn.small{padding:6px 9px;font-size:10px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row{display:flex;align-items:center;gap:10px}
+.between{justify-content:space-between}
+.wrap{flex-wrap:wrap}
+.mt{margin-top:15px}
+.list{display:flex;flex-direction:column}
+.list-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #ffffff12}
+.list-item:last-child{border:0}
+.list-item strong{font-size:13px}
+.list-item small{display:block;font-size:11px;color:var(--muted);margin-top:4px}
+.empty{text-align:center;padding:25px 10px;color:var(--muted);font-size:12px}
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:500px}
+th,td{text-align:left;padding:11px 9px;border-bottom:1px solid #ffffff12}
+th{color:var(--muted);font-size:11px}
+.tag{border:1px solid var(--line);padding:4px 7px;border-radius:20px;color:var(--muted);font-size:10px;white-space:nowrap}
+.tag.high{color:var(--bad);border-color:#6b3340}
+.progress{height:7px;background:#263441;border-radius:20px;overflow:hidden}
+.progress span{display:block;height:100%;background:var(--accent)}
+.task-row{display:flex;align-items:flex-start;gap:10px;padding:11px 0;border-bottom:1px solid #ffffff12}
+.task-row .grow{flex:1;min-width:0}
+.task-row.done .task-text{text-decoration:line-through;color:var(--muted)}
+.task-text{font-size:13px;overflow-wrap:anywhere}
+.task-row small{display:block;color:var(--muted);font-size:11px;margin-top:4px}
+.notice{padding:12px;border:1px solid var(--line);background:#101a25;border-radius:10px;color:var(--muted);font-size:12px;line-height:1.5;margin-bottom:15px}
+.bar-row{margin:12px 0}
+.bar-row .row{font-size:12px;margin-bottom:6px}
+.bar-row .progress span.bad{background:var(--bad)}
+.bar-row .progress span.good{background:var(--good)}
+canvas{max-width:100%;width:100%;display:block}
+.legend{display:flex;gap:14px;font-size:11px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:#183044;border:1px solid #27506b;color:white;padding:11px 16px;border-radius:10px;font-size:12px;opacity:0;pointer-events:none;transition:.25s;z-index:10;max-width:90vw}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:850px){
+ .app{display:block}
+ .sidebar{position:static;height:auto;padding:12px;border-right:0;border-bottom:1px solid var(--line)}
+ .brand{margin-bottom:12px}
+ .nav{display:flex;overflow:auto}
+ .nav button{white-space:nowrap;padding:10px}
+ .nav-title,.sidebar-bottom{display:none}
+ .main{padding:16px}
+ .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .three-col{grid-template-columns:1fr}
+}
+@media(max-width:520px){
+ .two-col{grid-template-columns:1fr}
+ .topbar h2{font-size:22px}
+ .date-pill{font-size:10px;padding:8px}
+ .page-head{align-items:flex-start;flex-direction:column}
+ .form-grid{grid-template-columns:1fr}
+ .full{grid-column:auto}
+ .metric-value{font-size:22px}
+ .card{padding:14px}
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="brand">
+    <div class="logo">◉</div>
+    <div>
+      <h1>PokéFarm Manager</h1>
+      <small>Ton économie, ta stratégie.</small>
+    </div>
+  </div>
+
+  <div class="nav-title">MENU PRINCIPAL</div>
+  <nav class="nav" id="nav">
+    <button type="button" class="active" data-page="dashboard" aria-current="page">🏠 Tableau de bord</button>
+    <button type="button" data-page="finances">💰 Finances</button>
+    <button type="button" data-page="period">📅 Par période</button>
+    <button type="button" data-page="market">🔄 Achat / Revente</button>
+    <button type="button" data-page="inventory">🎒 Inventaire</button>
+    <button type="button" data-page="farming">🌱 Farming</button>
+    <button type="button" data-page="tasks">☑️ Mes tâches</button>
+    <button type="button" data-page="statistics">📊 Statistiques</button>
+    <button type="button" data-page="settings">⚙️ Paramètres</button>
+  </nav>
+
+  <div class="sidebar-bottom">
+    <p>POKÉFARM MANAGER</p>
+    <p>Les données sont enregistrées sur cet appareil.</p>
+  </div>
+</aside>
+
+<main class="main">
+<header class="topbar">
+  <div>
+    <div class="eyebrow">POKÉMMO COMPANION</div>
+    <h2 id="pageTitle">Tableau de bord</h2>
+  </div>
+  <div class="date-pill" id="today"></div>
+</header>
+
+<!-- DASHBOARD -->
+<section class="page active" id="dashboard">
+  <div class="page-head">
+    <div>
+      <h3>Bienvenue, dresseur !</h3>
+      <p>Voici le résumé de ton activité.</p>
+    </div>
+    <button type="button" class="btn primary" onclick="showPage('finances')">+ Transaction</button>
+  </div>
+
+  <div class="grid stats-grid">
+    <div class="card">
+      <div class="metric-label">Solde actuel</div>
+      <div class="metric-value accent" id="dashBalance">0 ₽</div>
+      <div class="metric-foot">Départ + gains − dépenses</div>
+    </div>
+    <div class="card">
+      <div class="metric-label">Gains du mois</div>
+      <div class="metric-value positive" id="dashIncome">0 ₽</div>
+      <div class="metric-foot">Depuis le début du mois</div>
+    </div>
+    <div class="card">
+      <div class="metric-label">Dépenses du mois</div>
+      <div class="metric-value negative" id="dashExpense">0 ₽</div>
+      <div class="metric-foot">Depuis le début du mois</div>
+    </div>
+    <div class="card">
+      <div class="metric-label">Bénéfice du mois</div>
+      <div class="metric-value" id="dashProfit">0 ₽</div>
+      <div class="metric-foot">Gains − dépenses</div>
+    </div>
+  </div>
+
+  <div class="grid two-col">
+    <div class="card">
+      <h4>📅 Cette semaine</h4>
+      <div class="list">
+        <div class="list-item"><span class="muted">Gains</span><strong class="positive" id="weekIncome">0 ₽</strong></div>
+        <div class="list-item"><span class="muted">Dépenses</span><strong class="negative" id="weekExpense">0 ₽</strong></div>
+        <div class="list-item"><span class="muted">Bénéfice</span><strong id="weekProfit">0 ₽</strong></div>
+      </div>
+    </div>
+    <div class="card">
+      <h4>☑️ Progression des tâches</h4>
+      <div class="metric-value" id="taskProgress">0%</div>
+      <p class="muted" style="font-size:12px" id="taskProgressText">0 tâche terminée</p>
+      <div class="progress"><span id="taskProgressBar" style="width:0%"></span></div>
+      <button type="button" class="btn mt" onclick="showPage('tasks')">Voir mes tâches</button>
+    </div>
+    <div class="card">
+      <h4>🧾 Transactions récentes</h4>
+      <div id="recentTransactions" class="list"></div>
+    </div>
+    <div class="card">
+      <h4>🎯 Raccourcis</h4>
+      <div class="toolbar">
+        <button type="button" class="btn" onclick="showPage('market')">Achat / Revente</button>
+        <button type="button" class="btn" onclick="showPage('inventory')">Inventaire</button>
+        <button type="button" class="btn" onclick="showPage('farming')">Farming</button>
+      </div>
+      <p class="muted" style="font-size:12px;line-height:1.5">Pense à enregistrer tes achats et ventes pour suivre précisément tes bénéfices.</p>
+    </div>
+    <div class="card" style="grid-column:1/-1">
+      <h4>🏆 Objectif de bénéfice mensuel</h4>
+      <div class="row between wrap">
+        <strong id="goalText" class="muted" style="font-size:13px">Aucun objectif défini (voir Paramètres).</strong>
+        <span id="goalPct" class="accent" style="font-weight:bold"></span>
+      </div>
+      <div class="progress mt"><span id="goalBar" style="width:0%"></span></div>
+    </div>
+  </div>
+</section>
+
+<!-- FINANCES -->
+<section class="page" id="finances">
+  <div class="page-head">
+    <div><h3>Finances</h3><p>Enregistre tes gains et dépenses.</p></div>
+  </div>
+  <div class="grid two-col">
+    <div class="card">
+      <h4>➕ Ajouter une transaction</h4>
+      <form id="transactionForm" class="form-grid">
+        <div class="field">
+          <label for="txType">Type</label>
+          <select id="txType"><option value="income">Gain</option><option value="expense">Dépense</option></select>
+        </div>
+        <div class="field">
+          <label for="txAmount">Montant (PokéYen)</label>
+          <input id="txAmount" type="number" min="1" step="1" required placeholder="Ex. 15000">
+        </div>
+        <div class="field">
+          <label for="txCategory">Catégorie</label>
+          <select id="txCategory">
+            <option>Farming</option><option>Vente Pokémon</option><option>Vente objets</option>
+            <option>Achat Pokémon</option><option>Achat objets</option><option>Reproduction</option>
+            <option>Récompense</option><option>Autre</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="txDate">Date</label>
+          <input id="txDate" type="date" required>
+        </div>
+        <div class="field full">
+          <label for="txNote">Description</label>
+          <input id="txNote" maxlength="120" placeholder="Ex. Vente d'un Pokémon">
+        </div>
+        <div class="full"><button class="btn primary" type="submit">Enregistrer la transaction</button></div>
+      </form>
+    </div>
+    <div class="card">
+      <h4>💰 Solde de départ</h4>
+      <form id="balanceForm" class="form-grid">
+        <div class="field full">
+          <label for="startingBalance">PokéYen actuellement possédés</label>
+          <input id="startingBalance" type="number" min="0" step="1" required>
+        </div>
+        <div class="full"><button class="btn" type="submit">Mettre à jour le solde de départ</button></div>
+      </form>
+      <p class="muted" style="font-size:12px;line-height:1.5">Le solde actuel correspond au solde de départ, plus les gains, moins les dépenses enregistrées. Modifier le solde de départ ne supprime aucune transaction.</p>
+    </div>
+  </div>
+  <div class="card mt">
+    <div class="row between wrap">
+      <h4>Historique des transactions</h4>
+      <div class="toolbar">
+        <select id="txFilter" style="width:auto">
+          <option value="all">Toutes</option><option value="income">Gains</option><option value="expense">Dépenses</option>
+        </select>
+        <button type="button" class="btn" id="exportCsvBtn">Exporter CSV</button>
+      </div>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Date</th><th>Type</th><th>Catégorie</th><th>Description</th><th>Montant</th><th>Action</th></tr></thead>
+      <tbody id="transactionTable"></tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- PÉRIODE -->
+<section class="page" id="period">
+  <div class="page-head"><div><h3>Par période</h3><p>Gains, dépenses et bénéfices par jour, semaine ou mois.</p></div></div>
+  <div class="card">
+    <div class="row between wrap">
+      <div class="toolbar" id="perModes">
+        <button type="button" class="btn" data-mode="day">Jour</button>
+        <button type="button" class="btn" data-mode="week">Semaine</button>
+        <button type="button" class="btn" data-mode="month">Mois</button>
+      </div>
+      <div class="toolbar">
+        <button type="button" class="btn" id="perPrev" aria-label="Période précédente">◀</button>
+        <input type="date" id="perDate" style="width:auto" aria-label="Aller à une date">
+        <button type="button" class="btn" id="perNext" aria-label="Période suivante">▶</button>
+        <button type="button" class="btn" id="perToday">Aujourd'hui</button>
+      </div>
+    </div>
+    <h4 id="perLabel" style="margin:16px 0 0;font-size:16px;text-transform:capitalize"></h4>
+  </div>
+  <div class="grid stats-grid mt">
+    <div class="card"><div class="metric-label">Gains</div><div class="metric-value positive" id="perIncome">0 ₽</div><div class="metric-foot" id="perIncomeFoot"></div></div>
+    <div class="card"><div class="metric-label">Dépenses</div><div class="metric-value negative" id="perExpense">0 ₽</div><div class="metric-foot" id="perExpenseFoot"></div></div>
+    <div class="card"><div class="metric-label">Bénéfice</div><div class="metric-value" id="perProfit">0 ₽</div><div class="metric-foot" id="perAvg"></div></div>
+    <div class="card"><div class="metric-label">Bénéfice du farming</div><div class="metric-value" id="perFarm">0 ₽</div><div class="metric-foot" id="perFarmFoot"></div></div>
+  </div>
+  <div class="card">
+    <h4 id="perChartTitle">Détail jour par jour</h4>
+    <canvas id="perChart" height="240" role="img" aria-label="Gains et dépenses par jour sur la période"></canvas>
+    <div class="legend"><span><i style="background:#55d6a2"></i>Gains</span><span><i style="background:#ff7777"></i>Dépenses</span></div>
+  </div>
+  <div class="card mt">
+    <h4>🧾 Transactions de la période</h4>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Date</th><th>Type</th><th>Catégorie</th><th>Description</th><th>Montant</th></tr></thead>
+      <tbody id="perTable"></tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- MARCHÉ -->
+<section class="page" id="market">
+  <div class="page-head"><div><h3>Achat / Revente</h3><p>Calcule la rentabilité de tes transactions.</p></div></div>
+  <div class="grid two-col">
+    <div class="card">
+      <h4>🔄 Calculateur de bénéfice</h4>
+      <form id="marketForm" class="form-grid">
+        <div class="field full"><label for="marketItem">Pokémon ou objet</label><input id="marketItem" required maxlength="80" placeholder="Ex. Salamèche 2x31"></div>
+        <div class="field"><label for="marketBuy">Prix d'achat</label><input id="marketBuy" type="number" min="0" step="1" required placeholder="10000"></div>
+        <div class="field"><label for="marketSell">Prix de vente prévu</label><input id="marketSell" type="number" min="0" step="1" required placeholder="18000"></div>
+        <div class="field"><label for="marketFees">Autres frais</label><input id="marketFees" type="number" min="0" step="1" value="0"></div>
+        <div class="field"><label for="marketDate">Date</label><input id="marketDate" type="date" required></div>
+        <div class="field full"><label for="marketStatus">Statut</label><select id="marketStatus"><option value="planned">Projet</option><option value="bought">Acheté</option><option value="sold">Vendu</option></select></div>
+        <div class="field full"><label for="marketNote">Notes</label><input id="marketNote" maxlength="120" placeholder="IV, nature, capacité, etc."></div>
+        <div class="full"><button class="btn primary" type="submit">Enregistrer l'opération</button></div>
+      </form>
+      <div class="notice" style="margin-top:14px;margin-bottom:0">Bénéfice prévu = prix de vente − prix d'achat − frais. Pour une opération vendue, les gains et dépenses sont aussi inscrits dans les finances (et retirés si tu changes le statut ou supprimes l'opération).</div>
+    </div>
+    <div class="card">
+      <h4>📈 Résultat du calcul</h4>
+      <div class="metric-label">Bénéfice estimé</div>
+      <div class="metric-value accent" id="marketProfit">0 ₽</div>
+      <div class="metric-foot" id="marketMargin">Marge : —</div>
+      <div class="list mt">
+        <div class="list-item"><span class="muted">Prix d'achat</span><strong id="marketBuyView">0 ₽</strong></div>
+        <div class="list-item"><span class="muted">Prix de vente</span><strong id="marketSellView">0 ₽</strong></div>
+        <div class="list-item"><span class="muted">Frais</span><strong id="marketFeesView">0 ₽</strong></div>
+      </div>
+    </div>
+  </div>
+  <div class="card mt">
+    <h4>📋 Mes opérations</h4>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Objet</th><th>Achat</th><th>Vente prévue</th><th>Bénéfice</th><th>Statut</th><th>Action</th></tr></thead>
+      <tbody id="marketTable"></tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- INVENTAIRE -->
+<section class="page" id="inventory">
+  <div class="page-head"><div><h3>Inventaire</h3><p>Garde une trace de tes objets et Pokémon.</p></div></div>
+  <div class="grid two-col">
+    <div class="card">
+      <h4>🎒 Ajouter à l'inventaire</h4>
+      <form id="inventoryForm" class="form-grid">
+        <div class="field"><label for="invName">Nom</label><input id="invName" required maxlength="80" placeholder="Ex. Pépite"></div>
+        <div class="field"><label for="invType">Type</label><select id="invType"><option>Objet</option><option>Pokémon</option><option>Objet de reproduction</option><option>Autre</option></select></div>
+        <div class="field"><label for="invQty">Quantité</label><input id="invQty" type="number" min="1" step="1" value="1" required></div>
+        <div class="field"><label for="invValue">Valeur unitaire estimée</label><input id="invValue" type="number" min="0" step="1" value="0"></div>
+        <div class="field full"><label for="invNotes">Notes</label><input id="invNotes" maxlength="120" placeholder="Nature, IV, emplacement..."></div>
+        <div class="full"><button class="btn primary" type="submit">Ajouter à l'inventaire</button></div>
+      </form>
+    </div>
+    <div class="card">
+      <h4>📦 Valeur de l'inventaire</h4>
+      <div class="metric-value accent" id="inventoryValue">0 ₽</div>
+      <div class="metric-foot" id="inventoryCount">0 élément</div>
+      <p class="muted" style="font-size:12px;line-height:1.5">La valeur affichée est une estimation fondée sur la valeur unitaire que tu renseignes. Elle ne modifie pas tes finances.</p>
+    </div>
+  </div>
+  <div class="card mt">
+    <div class="row between wrap"><h4>Mes éléments</h4><input id="invSearch" placeholder="Rechercher..." style="max-width:220px"></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Nom</th><th>Type</th><th>Quantité</th><th>Valeur unitaire</th><th>Valeur totale</th><th>Notes</th><th>Action</th></tr></thead>
+      <tbody id="inventoryTable"></tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- FARMING -->
+<section class="page" id="farming">
+  <div class="page-head"><div><h3>Farming</h3><p>Note tes sessions et leurs bénéfices.</p></div></div>
+  <div class="grid two-col">
+    <div class="card">
+      <h4>🌱 Enregistrer une session</h4>
+      <form id="farmForm" class="form-grid">
+        <div class="field full"><label for="farmActivity">Activité</label><input id="farmActivity" required maxlength="80" placeholder="Ex. Récolte, farm de Pépite..."></div>
+        <div class="field"><label for="farmDate">Date</label><input id="farmDate" type="date" required></div>
+        <div class="field"><label for="farmDuration">Durée (minutes)</label><input id="farmDuration" type="number" min="0" step="1" value="60"></div>
+        <div class="field"><label for="farmIncome">Gains obtenus</label><input id="farmIncome" type="number" min="0" step="1" value="0" required></div>
+        <div class="field"><label for="farmCost">Dépenses</label><input id="farmCost" type="number" min="0" step="1" value="0" required></div>
+        <div class="field full"><label for="farmNotes">Notes</label><input id="farmNotes" maxlength="120" placeholder="Résultat, objets, rencontres..."></div>
+        <label class="check full"><input type="checkbox" id="farmToFinance" checked> Ajouter aussi ces montants aux finances</label>
+        <div class="full"><button class="btn primary" type="submit">Enregistrer la session</button></div>
+      </form>
+    </div>
+    <div class="card">
+      <h4>📊 Résumé du farming</h4>
+      <div class="metric-label">Bénéfice total</div><div class="metric-value positive" id="farmTotalProfit">0 ₽</div>
+      <div class="list mt">
+        <div class="list-item"><span class="muted">Temps passé</span><strong id="farmTotalTime">0 min</strong></div>
+        <div class="list-item"><span class="muted">Gains cumulés</span><strong id="farmTotalIncome">0 ₽</strong></div>
+        <div class="list-item"><span class="muted">Dépenses cumulées</span><strong id="farmTotalCost">0 ₽</strong></div>
+        <div class="list-item"><span class="muted">Bénéfice moyen / heure</span><strong id="farmPerHour">—</strong></div>
+      </div>
+    </div>
+  </div>
+  <div class="card mt">
+    <h4>📜 Historique du farming</h4>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Date</th><th>Activité</th><th>Durée</th><th>Gains</th><th>Dépenses</th><th>Bénéfice</th><th>Action</th></tr></thead>
+      <tbody id="farmTable"></tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- TÂCHES -->
+<section class="page" id="tasks">
+  <div class="page-head"><div><h3>Mes tâches</h3><p>Coche les objectifs terminés.</p></div></div>
+  <div class="grid two-col">
+    <div class="card">
+      <h4>➕ Nouvelle tâche</h4>
+      <form id="taskForm" class="form-grid">
+        <div class="field full"><label for="taskName">Objectif</label><input id="taskName" required maxlength="120" placeholder="Ex. Farm 100 000 PokéYen"></div>
+        <div class="field"><label for="taskDue">Échéance</label><input id="taskDue" type="date"></div>
+        <div class="field"><label for="taskPriority">Priorité</label><select id="taskPriority"><option>Normale</option><option>Haute</option><option>Basse</option></select></div>
+        <div class="full"><button class="btn primary" type="submit">Ajouter la tâche</button></div>
+      </form>
+    </div>
+    <div class="card">
+      <h4>📈 Avancement</h4>
+      <div class="metric-value" id="taskPageProgress">0%</div>
+      <p class="muted" style="font-size:12px" id="taskPageText">0 tâche terminée</p>
+      <div class="progress"><span id="taskPageBar" style="width:0%"></span></div>
+      <div class="toolbar mt">
+        <select id="taskFilter" style="width:auto">
+          <option value="all">Toutes</option><option value="todo">À faire</option><option value="done">Terminées</option>
+        </select>
+        <button type="button" class="btn danger" id="clearDoneBtn">Supprimer les terminées</button>
+      </div>
+    </div>
+  </div>
+  <div class="card mt">
+    <h4>📝 Liste des tâches</h4>
+    <div id="taskList"></div>
+  </div>
+</section>
+
+<!-- STATISTIQUES -->
+<section class="page" id="statistics">
+  <div class="page-head"><div><h3>Statistiques</h3><p>Analyse ton évolution sur 6 mois.</p></div></div>
+  <div class="card">
+    <h4>📊 Gains et dépenses par mois</h4>
+    <canvas id="statChart" height="240" role="img" aria-label="Graphique des gains et dépenses des six derniers mois"></canvas>
+    <div class="legend"><span><i style="background:#55d6a2"></i>Gains</span><span><i style="background:#ff7777"></i>Dépenses</span></div>
+  </div>
+  <div class="grid two-col mt">
+    <div class="card"><h4>💚 Gains par catégorie</h4><div id="statIncomeCats"></div></div>
+    <div class="card"><h4>❤️ Dépenses par catégorie</h4><div id="statExpenseCats"></div></div>
+  </div>
+  <div class="grid three-col mt">
+    <div class="card"><div class="metric-label">Bénéfice total (toutes périodes)</div><div class="metric-value" id="statTotalProfit">0 ₽</div></div>
+    <div class="card"><div class="metric-label">Bénéfice des reventes</div><div class="metric-value" id="statMarketProfit">0 ₽</div><div class="metric-foot" id="statMarketCount">0 vendue</div></div>
+    <div class="card"><div class="metric-label">Meilleure session de farming</div><div class="metric-value" id="statBestFarm">—</div><div class="metric-foot" id="statBestFarmName"></div></div>
+  </div>
+</section>
+
+<!-- PARAMÈTRES -->
+<section class="page" id="settings">
+  <div class="page-head"><div><h3>Paramètres</h3><p>Objectif, sauvegarde et réinitialisation.</p></div></div>
+  <div class="grid two-col">
+    <div class="card">
+      <h4>🏆 Objectif mensuel</h4>
+      <form id="goalForm" class="form-grid">
+        <div class="field full"><label for="goalInput">Bénéfice visé par mois (0 pour désactiver)</label><input id="goalInput" type="number" min="0" step="1" value="0"></div>
+        <div class="full"><button class="btn primary" type="submit">Enregistrer l'objectif</button></div>
+      </form>
+    </div>
+    <div class="card">
+      <h4>💾 Sauvegarde</h4>
+      <p class="muted" style="font-size:12px;line-height:1.5">Tes données sont stockées dans ce navigateur. Vider le cache ou changer d'appareil les efface : exporte une sauvegarde régulièrement.</p>
+      <div class="toolbar">
+        <button type="button" class="btn primary" id="exportJsonBtn">Exporter (JSON)</button>
+        <button type="button" class="btn" id="importJsonBtn">Importer (JSON)</button>
+        <input type="file" id="importFile" accept="application/json,.json" hidden>
+      </div>
+    </div>
+    <div class="card" style="grid-column:1/-1">
+      <h4>⚠️ Zone sensible</h4>
+      <p class="muted" style="font-size:12px;line-height:1.5">Supprime toutes les données (transactions, opérations, inventaire, sessions, tâches). Action irréversible.</p>
+      <button type="button" class="btn danger" id="resetBtn">Tout réinitialiser</button>
+    </div>
+  </div>
+</section>
+</main>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------- Utilitaires ---------- */
+const KEY='pokefarm_manager_v1';
+const $=id=>document.getElementById(id);
+const num=x=>{const n=Number(x);return Number.isFinite(n)?n:0};
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const pad=n=>String(n).padStart(2,'0');
+const localDate=(d=new Date())=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const fmt=n=>Math.round(num(n)).toLocaleString('fr-FR')+' ₽';
+const cls=n=>n>0?'positive':n<0?'negative':'';
+const fmtDate=s=>{const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||'');return m?m[3]+'/'+m[2]+'/'+m[1]:esc(s||'')};
+let toastTimer;
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2400)}
+
+/* ---------- Données ---------- */
+const def=()=>({balance:0,goal:0,tx:[],market:[],inv:[],farm:[],tasks:[]});
+function norm(r){
+  const d=def();
+  if(!r||typeof r!=='object')return d;
+  d.balance=num(r.balance);d.goal=num(r.goal);
+  ['tx','market','inv','farm','tasks'].forEach(k=>{d[k]=Array.isArray(r[k])?r[k].filter(x=>x&&typeof x==='object'):[]});
+  return d;
+}
+function load(){try{return norm(JSON.parse(localStorage.getItem(KEY)))}catch(e){return def()}}
+let S=load();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('Sauvegarde impossible (stockage bloqué ou plein).')}}
+
+/* ---------- Navigation ---------- */
+const titles={dashboard:'Tableau de bord',finances:'Finances',period:'Par période',market:'Achat / Revente',inventory:'Inventaire',farming:'Farming',tasks:'Mes tâches',statistics:'Statistiques',settings:'Paramètres'};
+function showPage(id){
+  if(!titles[id])return;
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));
+  document.querySelectorAll('#nav button').forEach(b=>{
+    const on=b.dataset.page===id;
+    b.classList.toggle('active',on);
+    if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');
+  });
+  $('pageTitle').textContent=titles[id];
+  if(id==='statistics')renderStats();
+  if(id==='period')renderPeriod();
+  window.scrollTo(0,0);
+}
+window.showPage=showPage;
+$('nav').addEventListener('click',e=>{const b=e.target.closest('button[data-page]');if(b)showPage(b.dataset.page)});
+
+/* ---------- Calculs ---------- */
+function totals(filterFn){
+  let inc=0,exp=0;
+  S.tx.forEach(t=>{if(filterFn&&!filterFn(t))return;const a=num(t.amount);if(t.type==='income')inc+=a;else exp+=a});
+  return{inc,exp,profit:inc-exp};
+}
+function weekStart(){const d=new Date();const day=(d.getDay()+6)%7;d.setDate(d.getDate()-day);return localDate(d)}
+
+/* ---------- Rendu ---------- */
+function renderDashboard(){
+  const all=totals();
+  $('dashBalance').textContent=fmt(S.balance+all.profit);
+  const ym=localDate().slice(0,7);
+  const m=totals(t=>String(t.date||'').startsWith(ym));
+  $('dashIncome').textContent=fmt(m.inc);
+  $('dashExpense').textContent=fmt(m.exp);
+  const dp=$('dashProfit');dp.textContent=fmt(m.profit);dp.className='metric-value '+cls(m.profit);
+  const ws=weekStart(),td=localDate();
+  const w=totals(t=>t.date>=ws&&t.date<=td);
+  $('weekIncome').textContent=fmt(w.inc);
+  $('weekExpense').textContent=fmt(w.exp);
+  const wp=$('weekProfit');wp.textContent=fmt(w.profit);wp.className=cls(w.profit);
+  const done=S.tasks.filter(t=>t.done).length,total=S.tasks.length;
+  const pct=total?Math.round(done/total*100):0;
+  $('taskProgress').textContent=pct+'%';
+  $('taskProgressText').textContent=done+(done>1?' tâches terminées':' tâche terminée')+' sur '+total;
+  $('taskProgressBar').style.width=pct+'%';
+  const rec=[...S.tx].sort((a,b)=>String(b.date).localeCompare(String(a.date))||0).slice(0,5);
+  $('recentTransactions').innerHTML=rec.length?rec.map(t=>`<div class="list-item"><div><strong>${esc(t.note||t.category)}</strong><small>${fmtDate(t.date)} · ${esc(t.category)}</small></div><strong class="${t.type==='income'?'positive':'negative'}">${t.type==='income'?'+':'−'}${fmt(t.amount)}</strong></div>`).join(''):'<div class="empty">Aucune transaction pour le moment.</div>';
+  if(S.goal>0){
+    const g=Math.max(0,Math.min(100,Math.round(m.profit/S.goal*100)));
+    $('goalText').textContent=fmt(m.profit)+' / '+fmt(S.goal);
+    $('goalText').className='';
+    $('goalPct').textContent=(m.profit>0?Math.round(m.profit/S.goal*100):0)+'%';
+    $('goalBar').style.width=g+'%';
+  }else{
+    $('goalText').textContent='Aucun objectif défini (voir Paramètres).';
+    $('goalText').className='muted';
+    $('goalPct').textContent='';$('goalBar').style.width='0%';
+  }
+}
+
+function renderFinances(){
+  $('startingBalance').value=S.balance;
+  const f=$('txFilter').value;
+  const rows=S.tx.filter(t=>f==='all'||t.type===f).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  $('transactionTable').innerHTML=rows.length?rows.map(t=>`<tr><td>${fmtDate(t.date)}</td><td><span class="tag">${t.type==='income'?'Gain':'Dépense'}</span></td><td>${esc(t.category)}</td><td>${esc(t.note)}</td><td class="${t.type==='income'?'positive':'negative'}">${t.type==='income'?'+':'−'}${fmt(t.amount)}</td><td><button type="button" class="btn small danger" data-act="del-tx" data-id="${esc(t.id)}">Supprimer</button></td></tr>`).join(''):'<tr><td colspan="6" class="empty">Aucune transaction.</td></tr>';
+}
+
+const statusLabel={planned:'Projet',bought:'Acheté',sold:'Vendu'};
+function renderMarket(){
+  $('marketTable').innerHTML=S.market.length?[...S.market].reverse().map(o=>{
+    const p=num(o.sell)-num(o.buy)-num(o.fees);
+    const st=['planned','bought','sold'].includes(o.status)?o.status:'planned';
+    return `<tr><td><strong>${esc(o.item)}</strong><br><small class="muted">${fmtDate(o.date)}${o.note?' · '+esc(o.note):''}</small></td><td>${fmt(o.buy)}</td><td>${fmt(o.sell)}</td><td class="${cls(p)}">${fmt(p)}</td><td><select data-act="market-status" data-id="${esc(o.id)}" aria-label="Statut" style="width:auto">${Object.keys(statusLabel).map(k=>`<option value="${k}"${k===st?' selected':''}>${statusLabel[k]}</option>`).join('')}</select></td><td><button type="button" class="btn small danger" data-act="del-market" data-id="${esc(o.id)}">Supprimer</button></td></tr>`;
+  }).join(''):'<tr><td colspan="6" class="empty">Aucune opération.</td></tr>';
+}
+
+function renderInventory(){
+  const q=$('invSearch').value.trim().toLowerCase();
+  let totalVal=0,totalQty=0;
+  S.inv.forEach(i=>{totalVal+=num(i.qty)*num(i.value);totalQty+=num(i.qty)});
+  $('inventoryValue').textContent=fmt(totalVal);
+  $('inventoryCount').textContent=S.inv.length+(S.inv.length>1?' éléments':' élément')+' · '+totalQty+' au total';
+  const rows=S.inv.filter(i=>!q||(String(i.name)+' '+String(i.type)+' '+String(i.notes)).toLowerCase().includes(q));
+  $('inventoryTable').innerHTML=rows.length?rows.map(i=>`<tr><td><strong>${esc(i.name)}</strong></td><td><span class="tag">${esc(i.type)}</span></td><td><div class="row"><button type="button" class="btn small" data-act="inv-minus" data-id="${esc(i.id)}" aria-label="Retirer un">−</button>${num(i.qty)}<button type="button" class="btn small" data-act="inv-plus" data-id="${esc(i.id)}" aria-label="Ajouter un">+</button></div></td><td>${fmt(i.value)}</td><td>${fmt(num(i.qty)*num(i.value))}</td><td>${esc(i.notes)}</td><td><button type="button" class="btn small danger" data-act="del-inv" data-id="${esc(i.id)}">Supprimer</button></td></tr>`).join(''):'<tr><td colspan="7" class="empty">Aucun élément.</td></tr>';
+}
+
+function renderFarm(){
+  let inc=0,cost=0,mins=0;
+  S.farm.forEach(f=>{inc+=num(f.income);cost+=num(f.cost);mins+=num(f.duration)});
+  const p=inc-cost;
+  const el=$('farmTotalProfit');el.textContent=fmt(p);el.className='metric-value '+(p<0?'negative':'positive');
+  $('farmTotalTime').textContent=mins>=60?Math.floor(mins/60)+' h '+pad(mins%60):mins+' min';
+  $('farmTotalIncome').textContent=fmt(inc);
+  $('farmTotalCost').textContent=fmt(cost);
+  $('farmPerHour').textContent=mins>0?fmt(p/(mins/60))+' / h':'—';
+  $('farmTable').innerHTML=S.farm.length?[...S.farm].sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(f=>{
+    const pr=num(f.income)-num(f.cost);
+    return `<tr><td>${fmtDate(f.date)}</td><td><strong>${esc(f.activity)}</strong>${f.notes?'<br><small class="muted">'+esc(f.notes)+'</small>':''}</td><td>${num(f.duration)} min</td><td class="positive">${fmt(f.income)}</td><td class="negative">${fmt(f.cost)}</td><td class="${cls(pr)}">${fmt(pr)}</td><td><button type="button" class="btn small danger" data-act="del-farm" data-id="${esc(f.id)}">Supprimer</button></td></tr>`;
+  }).join(''):'<tr><td colspan="7" class="empty">Aucune session.</td></tr>';
+}
+
+const prioOrder={'Haute':0,'Normale':1,'Basse':2};
+function renderTasks(){
+  const done=S.tasks.filter(t=>t.done).length,total=S.tasks.length;
+  const pct=total?Math.round(done/total*100):0;
+  $('taskPageProgress').textContent=pct+'%';
+  $('taskPageText').textContent=done+(done>1?' tâches terminées':' tâche terminée')+' sur '+total;
+  $('taskPageBar').style.width=pct+'%';
+  const f=$('taskFilter').value,td=localDate();
+  const rows=S.tasks.filter(t=>f==='all'||(f==='done'?t.done:!t.done)).sort((a,b)=>
+    (a.done-b.done)||((prioOrder[a.priority]??1)-(prioOrder[b.priority]??1))||String(a.due||'9999').localeCompare(String(b.due||'9999')));
+  $('taskList').innerHTML=rows.length?rows.map(t=>{
+    const late=!t.done&&t.due&&t.due<td;
+    return `<div class="task-row${t.done?' done':''}"><input type="checkbox" data-act="task-toggle" data-id="${esc(t.id)}" aria-label="Terminée"${t.done?' checked':''}><div class="grow"><div class="task-text">${esc(t.name)}</div><small>${t.due?'<span class="'+(late?'negative':'')+'">Échéance : '+fmtDate(t.due)+(late?' (en retard)':'')+'</span> · ':''}Priorité ${esc(t.priority)}</small></div>${t.priority==='Haute'?'<span class="tag high">Haute</span>':''}<button type="button" class="btn small danger" data-act="del-task" data-id="${esc(t.id)}">Supprimer</button></div>`;
+  }).join(''):'<div class="empty">Aucune tâche.</div>';
+}
+
+/* ---------- Statistiques ---------- */
+function catBars(type,target){
+  const map={};
+  S.tx.filter(t=>t.type===type).forEach(t=>{map[t.category]=(map[t.category]||0)+num(t.amount)});
+  const arr=Object.entries(map).sort((a,b)=>b[1]-a[1]);
+  const max=arr.length?arr[0][1]:0;
+  $(target).innerHTML=arr.length?arr.map(([c,v])=>`<div class="bar-row"><div class="row between"><span>${esc(c)}</span><strong>${fmt(v)}</strong></div><div class="progress"><span class="${type==='income'?'good':'bad'}" style="width:${max?Math.round(v/max*100):0}%"></span></div></div>`).join(''):'<div class="empty">Pas encore de données.</div>';
+}
+function drawChart(){
+  const cv=$('statChart');
+  const w=cv.clientWidth||600,h=240,dpr=window.devicePixelRatio||1;
+  cv.width=w*dpr;cv.height=h*dpr;
+  const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,w,h);
+  const now=new Date(),months=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const key=d.getFullYear()+'-'+pad(d.getMonth()+1);
+    const t=totals(x=>String(x.date||'').startsWith(key));
+    months.push({label:d.toLocaleDateString('fr-FR',{month:'short'}),inc:t.inc,exp:t.exp});
+  }
+  const max=Math.max(1,...months.flatMap(m=>[m.inc,m.exp]));
+  const L=10,B=26,T=14,gh=h-B-T,gw=w-L*2,slot=gw/months.length,bw=Math.min(28,slot/3);
+  c.strokeStyle='#2b3a49';c.fillStyle='#9badbd';c.font='11px Arial';c.textAlign='center';
+  c.beginPath();c.moveTo(L,h-B+.5);c.lineTo(w-L,h-B+.5);c.stroke();
+  months.forEach((m,i)=>{
+    const cx=L+slot*i+slot/2;
+    const hi=m.inc/max*gh,he=m.exp/max*gh;
+    c.fillStyle='#55d6a2';c.fillRect(cx-bw-2,h-B-hi,bw,hi);
+    c.fillStyle='#ff7777';c.fillRect(cx+2,h-B-he,bw,he);
+    c.fillStyle='#9badbd';c.fillText(m.label,cx,h-8);
+  });
+  c.textAlign='left';c.fillStyle='#9badbd';c.fillText('max '+fmt(max),L+2,T-2);
+}
+function renderStats(){
+  const all=totals();
+  const tp=$('statTotalProfit');tp.textContent=fmt(all.profit);tp.className='metric-value '+cls(all.profit);
+  const sold=S.market.filter(o=>o.status==='sold');
+  const mp=sold.reduce((s,o)=>s+num(o.sell)-num(o.buy)-num(o.fees),0);
+  const mpe=$('statMarketProfit');mpe.textContent=fmt(mp);mpe.className='metric-value '+cls(mp);
+  $('statMarketCount').textContent=sold.length+(sold.length>1?' vendues':' vendue');
+  if(S.farm.length){
+    const best=S.farm.reduce((a,b)=>(num(b.income)-num(b.cost))>(num(a.income)-num(a.cost))?b:a);
+    $('statBestFarm').textContent=fmt(num(best.income)-num(best.cost));
+    $('statBestFarmName').textContent=(best.activity||'')+' · '+fmtDate(best.date);
+  }else{$('statBestFarm').textContent='—';$('statBestFarmName').textContent=''}
+  catBars('income','statIncomeCats');catBars('expense','statExpenseCats');
+  drawChart();
+}
+window.addEventListener('resize',()=>{
+  if($('statistics').classList.contains('active'))drawChart();
+  if($('period').classList.contains('active'))renderPeriod();
+});
+
+/* ---------- Vue par période (jour / semaine / mois) ---------- */
+const P={mode:'week',ref:new Date()};
+const dOnly=d=>new Date(d.getFullYear(),d.getMonth(),d.getDate());
+const fl=(d,y)=>d.toLocaleDateString('fr-FR',y?{day:'numeric',month:'long',year:'numeric'}:{day:'numeric',month:'long'});
+function perRange(){
+  const r=dOnly(P.ref);let s,e;
+  if(P.mode==='day'){s=new Date(r);e=new Date(r)}
+  else if(P.mode==='week'){s=new Date(r);s.setDate(r.getDate()-((r.getDay()+6)%7));e=new Date(s);e.setDate(s.getDate()+6)}
+  else{s=new Date(r.getFullYear(),r.getMonth(),1);e=new Date(r.getFullYear(),r.getMonth()+1,0)}
+  return{s,e,a:localDate(s),b:localDate(e)};
+}
+function shiftPeriod(dir){
+  const d=dOnly(P.ref);
+  if(P.mode==='day')d.setDate(d.getDate()+dir);
+  else if(P.mode==='week')d.setDate(d.getDate()+7*dir);
+  else{d.setDate(1);d.setMonth(d.getMonth()+dir)}
+  P.ref=d;renderPeriod();
+}
+function drawBars(cv,items){
+  const w=cv.clientWidth;if(!w)return;
+  const h=240,dpr=window.devicePixelRatio||1;
+  cv.width=w*dpr;cv.height=h*dpr;
+  const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,w,h);
+  const max=Math.max(1,...items.flatMap(m=>[m.inc,m.exp]));
+  const L=10,B=26,T=14,gh=h-B-T,slot=(w-L*2)/items.length,bw=Math.max(2,Math.min(28,slot/2.6));
+  const step=Math.ceil(items.length/12);
+  c.strokeStyle='#2b3a49';c.font='11px Arial';c.textAlign='center';
+  c.beginPath();c.moveTo(L,h-B+.5);c.lineTo(w-L,h-B+.5);c.stroke();
+  items.forEach((m,i)=>{
+    const cx=L+slot*i+slot/2,hi=m.inc/max*gh,he=m.exp/max*gh;
+    c.fillStyle='#55d6a2';c.fillRect(cx-bw-1,h-B-hi,bw,hi);
+    c.fillStyle='#ff7777';c.fillRect(cx+1,h-B-he,bw,he);
+    if(i%step===0){c.fillStyle='#9badbd';c.fillText(m.label,cx,h-8)}
+  });
+  c.textAlign='left';c.fillStyle='#9badbd';c.fillText('max '+fmt(max),L+2,T-2);
+}
+function renderPeriod(){
+  const{s,e,a,b}=perRange();
+  document.querySelectorAll('#perModes button').forEach(x=>x.classList.toggle('primary',x.dataset.mode===P.mode));
+  $('perDate').value=localDate(P.ref);
+  $('perLabel').textContent=P.mode==='day'?P.ref.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):P.mode==='week'?'Semaine du '+fl(s)+' au '+fl(e,true):P.ref.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+  const inR=x=>String(x.date)>=a&&String(x.date)<=b;
+  const t=totals(inR);
+  $('perIncome').textContent=fmt(t.inc);
+  $('perExpense').textContent=fmt(t.exp);
+  const pe=$('perProfit');pe.textContent=fmt(t.profit);pe.className='metric-value '+cls(t.profit);
+  const nIn=S.tx.filter(x=>inR(x)&&x.type==='income').length,nEx=S.tx.filter(x=>inR(x)&&x.type==='expense').length;
+  $('perIncomeFoot').textContent=nIn+(nIn>1?' transactions':' transaction');
+  $('perExpenseFoot').textContent=nEx+(nEx>1?' transactions':' transaction');
+  const days=Math.round((e-s)/864e5)+1;
+  $('perAvg').textContent=P.mode==='day'?'Gains − dépenses':'Moyenne : '+fmt(t.profit/days)+' / jour';
+  const fs=S.farm.filter(inR);
+  let fi=0,fc=0,fm=0;fs.forEach(f=>{fi+=num(f.income);fc+=num(f.cost);fm+=num(f.duration)});
+  const fp=fi-fc,fe=$('perFarm');fe.textContent=fmt(fp);fe.className='metric-value '+cls(fp);
+  $('perFarmFoot').textContent=fs.length?fs.length+(fs.length>1?' sessions':' session')+' · '+(fm>=60?Math.floor(fm/60)+' h '+pad(fm%60):fm+' min')+(fm>0?' · '+fmt(fp/(fm/60))+' / h':''):'Aucune session';
+  $('perChartTitle').textContent=P.mode==='day'?'Les 14 derniers jours':'Détail jour par jour';
+  let from,to;
+  if(P.mode==='day'){to=dOnly(P.ref);from=new Date(to);from.setDate(to.getDate()-13)}else{from=s;to=e}
+  const items=[];
+  for(let d=new Date(from);d<=to;d.setDate(d.getDate()+1)){
+    const k=localDate(d),x=totals(y=>y.date===k);
+    items.push({label:P.mode==='week'?d.toLocaleDateString('fr-FR',{weekday:'short'}):String(d.getDate()),inc:x.inc,exp:x.exp});
+  }
+  drawBars($('perChart'),items);
+  const rows=S.tx.filter(inR).sort((x,y)=>String(y.date).localeCompare(String(x.date)));
+  $('perTable').innerHTML=rows.length?rows.map(x=>`<tr><td>${fmtDate(x.date)}</td><td><span class="tag">${x.type==='income'?'Gain':'Dépense'}</span></td><td>${esc(x.category)}</td><td>${esc(x.note)}</td><td class="${x.type==='income'?'positive':'negative'}">${x.type==='income'?'+':'−'}${fmt(x.amount)}</td></tr>`).join(''):'<tr><td colspan="5" class="empty">Aucune transaction sur cette période.</td></tr>';
+}
+$('perModes').addEventListener('click',e=>{const b=e.target.closest('button[data-mode]');if(b){P.mode=b.dataset.mode;renderPeriod()}});
+$('perPrev').addEventListener('click',()=>shiftPeriod(-1));
+$('perNext').addEventListener('click',()=>shiftPeriod(1));
+$('perToday').addEventListener('click',()=>{P.ref=new Date();renderPeriod()});
+$('perDate').addEventListener('change',e=>{const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(e.target.value);if(m){P.ref=new Date(+m[1],+m[2]-1,+m[3]);renderPeriod()}});
+
+function renderAll(){renderDashboard();renderFinances();renderPeriod();renderMarket();renderInventory();renderFarm();renderTasks();$('goalInput').value=S.goal;if($('statistics').classList.contains('active'))renderStats()}
+
+/* ---------- Synchronisation finances ---------- */
+function syncMarketTx(op){
+  S.tx=S.tx.filter(t=>t.marketId!==op.id);
+  if(op.status!=='sold')return;
+  const cost=num(op.buy)+num(op.fees),sell=num(op.sell);
+  if(cost>0)S.tx.push({id:uid(),type:'expense',amount:cost,category:'Autre',date:op.date,note:'Revente : '+op.item+' (achat + frais)',marketId:op.id});
+  if(sell>0)S.tx.push({id:uid(),type:'income',amount:sell,category:'Autre',date:op.date,note:'Revente : '+op.item+' (vente)',marketId:op.id});
+}
+
+/* ---------- Formulaires ---------- */
+$('transactionForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const amount=Math.round(num($('txAmount').value));
+  if(amount<=0){toast('Montant invalide.');return}
+  S.tx.push({id:uid(),type:$('txType').value==='expense'?'expense':'income',amount,category:$('txCategory').value,date:$('txDate').value||localDate(),note:$('txNote').value.trim()});
+  save();$('txAmount').value='';$('txNote').value='';renderAll();toast('Transaction enregistrée.');
+});
+$('balanceForm').addEventListener('submit',e=>{e.preventDefault();S.balance=Math.max(0,Math.round(num($('startingBalance').value)));save();renderAll();toast('Solde de départ mis à jour.')});
+$('txFilter').addEventListener('change',renderFinances);
+
+function marketCalc(){
+  const b=num($('marketBuy').value),s=num($('marketSell').value),f=num($('marketFees').value);
+  const p=s-b-f;
+  const el=$('marketProfit');el.textContent=fmt(p);el.className='metric-value '+(p<0?'negative':p>0?'positive':'accent');
+  $('marketMargin').textContent='Marge : '+(b>0?(p/b*100).toFixed(1).replace('.',',')+'%':'—');
+  $('marketBuyView').textContent=fmt(b);$('marketSellView').textContent=fmt(s);$('marketFeesView').textContent=fmt(f);
+}
+['marketBuy','marketSell','marketFees'].forEach(id=>$(id).addEventListener('input',marketCalc));
+$('marketForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const op={id:uid(),item:$('marketItem').value.trim(),buy:Math.max(0,num($('marketBuy').value)),sell:Math.max(0,num($('marketSell').value)),fees:Math.max(0,num($('marketFees').value)),date:$('marketDate').value||localDate(),status:$('marketStatus').value,note:$('marketNote').value.trim()};
+  if(!op.item){toast('Nom requis.');return}
+  S.market.push(op);syncMarketTx(op);save();
+  $('marketItem').value='';$('marketBuy').value='';$('marketSell').value='';$('marketFees').value='0';$('marketNote').value='';
+  marketCalc();renderAll();toast('Opération enregistrée.');
+});
+
+$('inventoryForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const name=$('invName').value.trim();if(!name)return;
+  S.inv.push({id:uid(),name,type:$('invType').value,qty:Math.max(1,Math.round(num($('invQty').value))),value:Math.max(0,num($('invValue').value)),notes:$('invNotes').value.trim()});
+  save();$('invName').value='';$('invQty').value='1';$('invValue').value='0';$('invNotes').value='';renderAll();toast('Ajouté à l\'inventaire.');
+});
+$('invSearch').addEventListener('input',renderInventory);
+
+$('farmForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const f={id:uid(),activity:$('farmActivity').value.trim(),date:$('farmDate').value||localDate(),duration:Math.max(0,num($('farmDuration').value)),income:Math.max(0,num($('farmIncome').value)),cost:Math.max(0,num($('farmCost').value)),notes:$('farmNotes').value.trim()};
+  if(!f.activity){toast('Activité requise.');return}
+  S.farm.push(f);
+  if($('farmToFinance').checked){
+    if(f.income>0)S.tx.push({id:uid(),type:'income',amount:f.income,category:'Farming',date:f.date,note:'Farming : '+f.activity,farmId:f.id});
+    if(f.cost>0)S.tx.push({id:uid(),type:'expense',amount:f.cost,category:'Farming',date:f.date,note:'Farming : '+f.activity,farmId:f.id});
+  }
+  save();$('farmActivity').value='';$('farmIncome').value='0';$('farmCost').value='0';$('farmNotes').value='';renderAll();toast('Session enregistrée.');
+});
+
+$('taskForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const name=$('taskName').value.trim();if(!name)return;
+  S.tasks.push({id:uid(),name,due:$('taskDue').value,priority:$('taskPriority').value,done:false});
+  save();$('taskName').value='';$('taskDue').value='';renderAll();toast('Tâche ajoutée.');
+});
+$('taskFilter').addEventListener('change',renderTasks);
+$('clearDoneBtn').addEventListener('click',()=>{
+  const n=S.tasks.filter(t=>t.done).length;
+  if(!n){toast('Aucune tâche terminée.');return}
+  if(confirm('Supprimer '+n+' tâche(s) terminée(s) ?')){S.tasks=S.tasks.filter(t=>!t.done);save();renderAll()}
+});
+
+/* ---------- Actions de tableau (délégation) ---------- */
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b||b.tagName==='SELECT'||b.type==='checkbox')return;
+  const id=b.dataset.id,act=b.dataset.act;
+  if(act==='del-tx'){if(!confirm('Supprimer cette transaction ?'))return;S.tx=S.tx.filter(t=>t.id!==id)}
+  else if(act==='del-market'){if(!confirm('Supprimer cette opération (et ses transactions liées) ?'))return;S.market=S.market.filter(o=>o.id!==id);S.tx=S.tx.filter(t=>t.marketId!==id)}
+  else if(act==='del-inv'){if(!confirm('Supprimer cet élément ?'))return;S.inv=S.inv.filter(i=>i.id!==id)}
+  else if(act==='inv-plus'||act==='inv-minus'){const i=S.inv.find(x=>x.id===id);if(!i)return;i.qty=Math.max(1,num(i.qty)+(act==='inv-plus'?1:-1))}
+  else if(act==='del-farm'){if(!confirm('Supprimer cette session (et ses transactions liées) ?'))return;S.farm=S.farm.filter(f=>f.id!==id);S.tx=S.tx.filter(t=>t.farmId!==id)}
+  else if(act==='del-task'){S.tasks=S.tasks.filter(t=>t.id!==id)}
+  else return;
+  save();renderAll();
+});
+document.addEventListener('change',e=>{
+  const el=e.target.closest('[data-act]');if(!el)return;
+  if(el.dataset.act==='market-status'){
+    const op=S.market.find(o=>o.id===el.dataset.id);if(!op)return;
+    op.status=el.value;syncMarketTx(op);save();renderAll();
+  }else if(el.dataset.act==='task-toggle'){
+    const t=S.tasks.find(x=>x.id===el.dataset.id);if(!t)return;
+    t.done=el.checked;save();renderAll();
+  }
+});
+
+/* ---------- Export / Import / Paramètres ---------- */
+function download(name,text,type){
+  const url=URL.createObjectURL(new Blob([text],{type}));
+  const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+const csvCell=v=>{let s=String(v==null?'':v);if(/^[=+\-@\t\r]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"'};
+$('exportCsvBtn').addEventListener('click',()=>{
+  if(!S.tx.length){toast('Aucune transaction à exporter.');return}
+  const lines=[['Date','Type','Catégorie','Description','Montant']].concat([...S.tx].sort((a,b)=>String(a.date).localeCompare(String(b.date))).map(t=>[t.date,t.type==='income'?'Gain':'Dépense',t.category,t.note,t.amount]));
+  download('pokefarm-transactions-'+localDate()+'.csv','\uFEFF'+lines.map(r=>r.map(csvCell).join(';')).join('\r\n'),'text/csv;charset=utf-8');
+});
+$('exportJsonBtn').addEventListener('click',()=>download('pokefarm-sauvegarde-'+localDate()+'.json',JSON.stringify(S,null,2),'application/json'));
+$('importJsonBtn').addEventListener('click',()=>$('importFile').click());
+$('importFile').addEventListener('change',e=>{
+  const file=e.target.files[0];e.target.value='';if(!file)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const data=JSON.parse(r.result);
+      if(!data||typeof data!=='object'||!('tx' in data||'balance' in data))throw new Error('format');
+      if(!confirm('Remplacer toutes les données actuelles par cette sauvegarde ?'))return;
+      S=norm(data);save();renderAll();toast('Sauvegarde importée.');
+    }catch(err){toast('Fichier invalide.')}
+  };
+  r.readAsText(file);
+});
+$('goalForm').addEventListener('submit',e=>{e.preventDefault();S.goal=Math.max(0,Math.round(num($('goalInput').value)));save();renderAll();toast('Objectif enregistré.')});
+$('resetBtn').addEventListener('click',()=>{
+  if(confirm('Supprimer TOUTES les données ? Cette action est irréversible.')&&confirm('Dernière confirmation : tout effacer ?')){S=def();save();renderAll();toast('Données réinitialisées.')}
+});
+
+/* ---------- Initialisation ---------- */
+$('today').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+['txDate','marketDate','farmDate'].forEach(id=>$(id).value=localDate());
+marketCalc();renderAll();
+if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+})();
+</script>
+</body>
+</html>
